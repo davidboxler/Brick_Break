@@ -12,8 +12,8 @@ Una vez iniciado el juego deberás mover la base que sostiene la bola en el aire
 
 ## Instalar
 
-### Primero descarga este repositorio
-### Luego abre la carpeta que contiene el repositorio desde Visual Studio Code
-### Luego inicia una nueva terminal y ejecuta npm install
-### Una vez que termine de instalar las dependencias escribe npm run dev
-### Comienza a Jugar!
+Primero descarga este repositorio
+Luego abre la carpeta que contiene el repositorio desde Visual Studio Code
+Luego inicia una nueva terminal y ejecuta npm install
+Una vez que termine de instalar las dependencias escribe npm run dev
+Comienza a Jugar!
