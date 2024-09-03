@@ -1,76 +1,72 @@
 import { Scene } from "phaser";
 
+// import class entitities
+import { BallGroup } from "../entities/BallGroup";
+import { BombGroup } from "../entities/BombGroup";
+import { Paddle } from "../entities/Paddle";
+import { WallBrick } from "../entities/WallBrick";
 export class Game extends Scene {
   constructor() {
     super("Game");
   }
 
-  init() {}
-
   create() {
-    this.physics.world.setBoundsCollision(true, true, true, false);
+    // Inicialización de la pala
+    this.paddle = new Paddle(this, 400, 700);
 
-    this.brickGroup = this.physics.add.staticGroup();
-    this.brickGroup.create(300, 315, "brick");
+    // Desactivar colisión con la parte inferior del mundo
+    this.physics.world.checkCollision.down = false;
 
-    this.platform = this.physics.add.image(400, 700, "pala").setImmovable();
-    this.platform.setCollideWorldBounds(true);
-    this.platform.body.allowGravity = false;
+    // Inicialización del grupo de pelotas
+    this.ballGroup = new BallGroup(this);
+    this.ballGroup.createBall(this);
 
-    this.ball = this.physics.add.image(400, 650, "ball");
-    this.ball.setData("glue", true);
-    this.ball.setCollideWorldBounds(true);
+    // Inicialización del grupo de bombas
+    this.bombGroup = new BombGroup(this);
 
+    // Añadir las físicas y colisiones para las pelotas y la paleta
+    this.physics.add.collider(this.ballGroup.getChildren(), this.paddle);
+
+    // Añadir las físicas y colisiones para las pelotas y los ladrillos
+    this.wall = new WallBrick(this);
     this.physics.add.collider(
-      this.ball,
-      this.platform,
-      this.platformImpact,
-      null,
-      this
+        this.ballGroup.getChildren(), 
+        this.wall.getChildren(), 
+        (ball, brick) => {
+            brick.hit();
+        },
+        null,
+        this
     );
+
+    // Añadir colisiones entre las bombas y la paleta
     this.physics.add.collider(
-      this.ball,
-      this.brickGroup,
-      this.brickImpact,
-      null,
-      this
+        this.bombGroup.getChildren(), 
+        this.paddle, 
+        () => {
+            this.scene.start("GameOver"); 
+        },
+        null,
+        this
     );
 
-    this.ball.setBounce(1);
-
-    // this.cursors = this.input.keyboard.createCursorKeys();
-  }
-
-  brickImpact(ball, brick) {
-    brick.disableBody(true, true);
-  }
-
-  platformImpact(ball, platform) {
-    this.ball.setVelocity(10, -1000);
-    let impact = ball.x - platform.x;
-    if (impact < 0.1 && impact > -0.1) {
-      ball.setVelocityX(Phaser.Math.Between(-10, 10));
-    } else {
-      ball.setVelocityX(5 * impact);
-    }
+    // Escuchar la tecla de espacio para lanzar todas las pelotas
+    this.input.keyboard.on("keydown-SPACE", () => {
+        this.ballGroup.getChildren().forEach(ball => ball.launchBall());
+    });
   }
 
   update() {
-    let pointer = this.input.activePointer;
-    this.platform.x = pointer.x;
-
-    if (this.ball.getData("glue")) {
-      this.ball.x = this.platform.x;
-    }
-
-    if (pointer.isDown && this.ball.getData("glue")) {
-      this.ball.setVelocity(-75, -300);
-      this.ball.setData("glue", false);
-    }
-
-    if (this.ball.y > 750) {
-      this.scene.start("GameOver");
-      this.scene.pause();
-    }
+    this.paddle.update();
+    this.ballGroup.getChildren().forEach(ball => {
+        ball.update();
+        if (ball.y > 750) {
+            ball.destroy();
+            if (this.ballGroup.getChildren().length === 0) {
+                this.scene.start("GameOver");
+                this.scene.pause();
+            }
+        }
+    });
   }
 }
